@@ -28,10 +28,9 @@ class UserTestCase(APITestCase):
         with self.assertRaisesMessage(ValidationError, err_message):
             serializer = UserSerializer(data=data)
             serializer.is_valid(raise_exception=True)
-        self.assertIn("mobile_number", serializer.errors)
-        self.assertIn("first_name", serializer.errors)
-        self.assertIn("last_name", serializer.errors)
-        self.assertIn("email", serializer.errors)
+        required_fields = ['mobile_number', 'first_name', 'last_name', 'email']
+        for f in required_fields:
+            self.assertIn(f, serializer.errors)
 
     def test_valid_id_mobile_number(self):
         invalid_mobile_numbers = [
@@ -61,6 +60,7 @@ class UserTestCase(APITestCase):
         with self.assertRaisesMessage(ValidationError, err_message):
             serializer = UserSerializer(data=self.valid_data)
             serializer.is_valid(raise_exception=True)
+
         self.assertIn("mobile_number", serializer.errors)
         User.objects.get(
             mobile_number=self.valid_data['mobile_number']).delete()
@@ -73,6 +73,7 @@ class UserTestCase(APITestCase):
         with self.assertRaisesMessage(ValidationError, err_message):
             serializer = UserSerializer(data=self.valid_data)
             serializer.is_valid(raise_exception=True)
+
         self.assertIn("email", serializer.errors)
         User.objects.get(
             mobile_number=self.valid_data['mobile_number']).delete()
