@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Registration</h2>
+<form v-on:submit.prevent="onSubmit" id="user-form" class="row g-3">
+    {% csrf_token %}
+    <div class="col-md-12">
+        <input type="text" class="form-control" :class="{'is-invalid':(errors.mobile_number!='')}" id="mobile_number"
+            name="mobile_number" v-model="mobileNumber" required="" placeholder="Mobile number"
+            :disabled="isSubmitting">
+        <div id="validationMobileNumberFeedback" class="invalid-feedback">
+            [[ errors.mobile_number ]]
+        </div>
+    </div>
+    <div class="col-md-12">
+        <input type="text" class="form-control" :class="{'is-invalid':(errors.first_name!='')}" id="first_name"
+            name="first_name" v-model="firstName" required="" placeholder="First name" :disabled="isSubmitting">
+    </div>
+    <div class="col-md-12">
+        <input type="text" class="form-control" :class="{'is-invalid':(errors.last_name!='')}" id="last_name"
+            name="last_name" v-model="lastName" required="" placeholder="Last name" :disabled="isSubmitting">
+    </div>
+    <div class="row g-3">
+        <label class="form-label mb-1">Date of Birth</label>
+
+        <div class="col-3 mt-1">
+            <select class="form-select" :class="{'is-invalid':(errors.date_of_birth!='')}" id="month-dob"
+                v-model="dob.month" :disabled="isSubmitting">
+                <option selected="" disabled="" value="">Month</option>
+                <option v-for=" month in months" :value="month[0]">[[ month[1] ]]</option>
+            </select>
+        </div>
+        <div class="col-3 mt-1">
+            <select class="form-select" :class="{'is-invalid':(errors.date_of_birth!='')}" id="day-dob"
+                v-model="dob.day" :disabled="isSubmitting">
+                <option selected="" disabled="" value="">Date</option>
+                <option v-for=" date in dates" :value="date">[[ date ]]</option>
+            </select>
+        </div>
+        <div class="col-3 mt-1">
+            <select class="form-select" :class="{'is-invalid':(errors.date_of_birth!='')}" id="year-dob"
+                aria-describedby="validationDateofBirth" v-model="dob.year" :disabled="isSubmitting">
+                <option selected="" disabled="" value="">Year</option>
+                <option v-for=" year in years" :value="year">[[ year ]]</option>
+            </select>
+        </div>
+
+        <div id="validationDateofBirth" style="font-size: 0.875em;color: var(--bs-form-invalid-color);">
+            [[ errors.date_of_birth ]]
+        </div>
+    </div>
+    <div class="form-check form-check-inline col-2">
+        <input class="form-check-input" type="radio" name="sex" value="true" v-model="sex" id="sex1"
+            :disabled="isSubmitting">
+        <label class="form-check-label" for="sex1"> Male </label>
+    </div>
+    <div class="form-check form-check-inline col-2">
+        <input class="form-check-input" type="radio" name="sex" value="false" v-model="sex" id="sex2"
+            :disabled="isSubmitting">
+        <label class="form-check-label" for="sex2"> Female </label>
+    </div>
+    <div class="col-md-12">
+        <input type="text" class="form-control" :class="{'is-invalid':(errors.email!='')}" id="email" name="email"
+            v-model="email" aria-describedby="validationEmailFeedback" required="required" placeholder="Email"
+            :disabled="isSubmitting">
+        <div id=" validationEmailFeedback" class="invalid-feedback">
+            [[ errors.email ]]
+        </div>
+    </div>
+    <div class="col-12">
+        <button :disabled="isSubmitting" id="submit_btn" class="btn w-100 btn-primary" type="submit">Register</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    const { createApp, ref, reactive } = Vue
+
+    createApp({
+        setup() {
+            const delay = async (ms) => new Promise(res => setTimeout(res, ms));
+            const firstName = ref('')
+            const lastName = ref('')
+            const email = ref('')
+            const mobileNumber = ref('')
+            const sex = ref(true)
+            const isSubmitting = ref(false)
+            const errors = reactive({
+                mobile_number: "",
+                first_name: "",
+                last_name: "",
+                date_of_birth: "",
+                email: ""
+            })
+            const dob = reactive({
+                day: "",
+                month: "",
+                year: ""
+            })
+            const years = ref([])
+            const dates = ref([])
+            const months = ref([
+                [1, "January"],
+                [2, "February"],
+                [3, "March"],
+                [4, "April"],
+                [5, "May"],
+                [6, "June"],
+                [7, "July"],
+                [8, "August"],
+                [9, "September"],
+                [10, "October"],
+                [11, "November"],
+                [12, "December"],
+            ])
+
+            for (let i = 1900; i < new Date().getFullYear() - 15; i++) {
+                years.value.push(i);
+            }
+            for (let i = 1; i <= 31; i++) {
+                dates.value.push(i);
+            }
+
+            const onSubmit = async () => {
+                isSubmitting.value = true
+                for (const key in errors) {
+                    errors[key] = ""
+                }
+
+                // console.log('delay for 5 sec');
+                // await delay(5000)
+
+                let date_of_birth = `${dob.year}-${('0' + dob.month).slice(-2)}-${('0' + dob.day).slice(-2)}`
+
+                // User didn't input the date of birth
+                if (date_of_birth == "-0-0") {
+                    date_of_birth = null
+                }
+
+                const url = "/api/users/"
+                const body = JSON.stringify({
+                    mobile_number: mobileNumber.value,
+                    first_name: firstName.value,
+                    last_name: lastName.value,
+                    date_of_birth: date_of_birth,
+                    sex: sex.value,
+                    email: email.value
+                })
+
+                const response = await fetch(
+                    url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: body
+                })
+
+                try {
+                    const msg = await response.json()
+                    if (response.status !== 201) {
+                        for (const key in errors) {
+                            if (Object.hasOwnProperty.call(errors, key)) {
+                                if (msg[key]) {
+                                    errors[key] = msg[key].join(" ")
+                                }
+                            }
+                        }
+
+                    } else {
+                        window.location.href = "/login/"
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
+
+
+                isSubmitting.value = false
+            }
+            return {
+                onSubmit,
+                years,
+                dates,
+                months,
+                mobileNumber,
+                firstName,
+                lastName,
+                sex,
+                dob,
+                email,
+                isSubmitting,
+                errors,
+            }
+        },
+        delimiters: ['[[', ']]']
+    }).mount('#app')
+</script>
+{% endblock %}
