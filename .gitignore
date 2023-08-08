@@ -9,7 +9,6 @@ frontend
 .vscode
 
 # Django settings
-**/settings.py
 *.pyc
 *.ipynb
 *log
