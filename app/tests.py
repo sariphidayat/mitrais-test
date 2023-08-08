@@ -75,5 +75,4 @@ class UserTestCase(APITestCase):
             serializer.is_valid(raise_exception=True)
 
         self.assertIn("email", serializer.errors)
-        User.objects.get(
-            mobile_number=self.valid_data['mobile_number']).delete()
+        User.objects.get(email=self.valid_data['email']).delete()
